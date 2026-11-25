@@ -1,0 +1,49 @@
+# ── Python virtual environment ─────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ── Python cache ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+
+# ── Project runtime folders ────────────────────────────────────────────────
+backend/uploads/
+backend/outputs/
+backend/graphs/
+
+# ── YOLO model weights (large binary files) ────────────────────────────────
+*.pt
+*.onnx
+*.engine
+*.torchscript
+
+# ── Jupyter / IPython ──────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── OS files ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE / Editor ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs & temp ────────────────────────────────────────────────────────────
+*.log
+*.tmp
+tmp/
+
+# ── Distribution / packaging ───────────────────────────────────────────────
+dist/
+build/
+*.egg-info/

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VisionTrack — Object Movement Detection & Tracking</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ══════════════════════════ HEADER ══════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="#58a6ff" stroke-width="2"/>
+        <circle cx="16" cy="16" r="5" fill="#58a6ff"/>
+        <line x1="16" y1="2" x2="16" y2="8" stroke="#58a6ff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="24" x2="16" y2="30" stroke="#58a6ff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="2" y1="16" x2="8" y2="16" stroke="#58a6ff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="24" y1="16" x2="30" y2="16" stroke="#58a6ff" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="logo-text">VisionTrack</span>
+    </div>
+    <nav class="nav-pills">
+      <span class="pill active" data-section="upload">Upload</span>
+      <span class="pill" data-section="detect">Detect</span>
+      <span class="pill" data-section="track">Track</span>
+      <span class="pill" data-section="results">Results</span>
+    </nav>
+    <div class="status-badge" id="statusBadge">
+      <span class="dot"></span> Idle
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════ HERO ════════════════════════════════════════ -->
+<section class="hero">
+  <h1 class="hero-title">Object-Specific Movement<br><span class="accent">Detection &amp; Tracking</span></h1>
+  <p class="hero-sub">Upload a video → detect objects with YOLOv8 → select an ID → analyse movement, trajectory &amp; speed</p>
+  <div class="hero-badges">
+    <span class="badge">YOLOv8</span>
+    <span class="badge">ByteTrack</span>
+    <span class="badge">OpenCV</span>
+    <span class="badge">Matplotlib</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════ MAIN CONTENT ════════════════════════════════ -->
+<main class="container">
+
+  <!-- ── STEP 1: Upload ─────────────────────────────────────────────────── -->
+  <section class="card section-card" id="sec-upload">
+    <div class="card-header">
+      <span class="step-num">01</span>
+      <div>
+        <h2 class="card-title">Upload Video</h2>
+        <p class="card-sub">Supports MP4, AVI, MOV, MKV, WebM</p>
+      </div>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="videoInput" accept="video/*" hidden />
+      <div class="upload-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect x="4" y="8" width="40" height="32" rx="4" stroke="#58a6ff" stroke-width="2"/>
+          <path d="M20 20L28 24L20 28V20Z" fill="#58a6ff"/>
+        </svg>
+      </div>
+      <p class="upload-text">Drag &amp; drop a video or <button class="link-btn" id="browseBtn">browse</button></p>
+      <p class="upload-hint">Max recommended: 100 MB</p>
+    </div>
+
+    <div class="file-preview hidden" id="filePreview">
+      <div class="file-info">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#3fb950"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        <span id="fileName">—</span>
+        <span class="file-size" id="fileSize"></span>
+      </div>
+    </div>
+
+    <div class="conf-row">
+      <label class="form-label">Detection confidence: <strong id="confVal">0.35</strong></label>
+      <input type="range" id="confSlider" min="0.1" max="0.9" step="0.05" value="0.35" class="slider" />
+    </div>
+
+    <button class="btn btn-primary full-width" id="uploadBtn" disabled>
+      <span class="btn-icon">↑</span> Upload &amp; Analyse Video
+    </button>
+  </section>
+
+  <!-- ── STEP 2: Detect → Object List ───────────────────────────────────── -->
+  <section class="card section-card hidden" id="sec-detect">
+    <div class="card-header">
+      <span class="step-num">02</span>
+      <div>
+        <h2 class="card-title">Detected Objects</h2>
+        <p class="card-sub">Select the object you want to track</p>
+      </div>
+    </div>
+
+    <div class="video-meta" id="videoMeta"></div>
+
+    <div class="search-row">
+      <input type="text" id="classFilter" placeholder="Filter by class (e.g. person, car…)" class="search-input" />
+    </div>
+
+    <div class="object-grid" id="objectGrid">
+      <!-- populated by JS -->
+    </div>
+
+    <button class="btn btn-primary" id="trackBtn" disabled>
+      <span class="btn-icon">▶</span> Track Selected Object
+    </button>
+  </section>
+
+  <!-- ── STEP 3: Processing ──────────────────────────────────────────────── -->
+  <section class="card section-card hidden" id="sec-track">
+    <div class="card-header">
+      <span class="step-num">03</span>
+      <div>
+        <h2 class="card-title">Tracking &amp; Analysis</h2>
+        <p class="card-sub">Rendering annotated video and generating graphs…</p>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p class="progress-label" id="progressLabel">Please wait…</p>
+  </section>
+
+  <!-- ── STEP 4: Results ────────────────────────────────────────────────── -->
+  <section class="card section-card hidden" id="sec-results">
+    <div class="card-header">
+      <span class="step-num">04</span>
+      <div>
+        <h2 class="card-title">Results</h2>
+        <p class="card-sub">Movement analytics for the selected object</p>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="tab-video">📹 Annotated Video</button>
+      <button class="tab-btn" data-tab="tab-trajectory">📍 Trajectory</button>
+      <button class="tab-btn" data-tab="tab-speed">⚡ Speed</button>
+      <button class="tab-btn" data-tab="tab-displacement">↔ Displacement</button>
+      <button class="tab-btn" data-tab="tab-direction">🧭 Direction</button>
+      <button class="tab-btn" data-tab="tab-dashboard">📊 Dashboard</button>
+    </div>
+
+    <div class="tab-content" id="tab-video">
+      <video id="resultVideo" controls class="result-video" crossorigin="anonymous" preload="metadata">
+        <source id="resultVideoSource" src="" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <p class="video-hint" id="videoHint" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:var(--text-muted);">
+        ⬇️ <a id="videoDownloadLink" href="#" download style="color:var(--accent)">Download annotated video</a> if it doesn't play inline.
+      </p>
+    </div>
+    <div class="tab-content hidden" id="tab-trajectory">
+      <img id="imgTrajectory" class="graph-img" alt="Trajectory graph" />
+    </div>
+    <div class="tab-content hidden" id="tab-speed">
+      <img id="imgSpeed" class="graph-img" alt="Speed graph" />
+    </div>
+    <div class="tab-content hidden" id="tab-displacement">
+      <img id="imgDisplacement" class="graph-img" alt="Displacement graph" />
+    </div>
+    <div class="tab-content hidden" id="tab-direction">
+      <img id="imgDirection" class="graph-img" alt="Direction histogram" />
+    </div>
+    <div class="tab-content hidden" id="tab-dashboard">
+      <img id="imgDashboard" class="graph-img" alt="Dashboard" />
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-secondary" id="trackAnotherBtn">← Track Another Object</button>
+      <button class="btn btn-outline" id="newVideoBtn">↺ New Video</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════ TOAST ═══════════════════════════════════════ -->
+<div class="toast hidden" id="toast"></div>
+
+<!-- ══════════════════════════ FOOTER ═════════════════════════════════════ -->
+<footer class="footer">
+  <p>VisionTrack &mdash; Object-Specific Movement Detection &amp; Tracking &nbsp;|&nbsp; Built with YOLOv8 · ByteTrack · OpenCV · Flask</p>
+</footer>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
